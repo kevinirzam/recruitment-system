@@ -104,14 +104,22 @@
 
                         <form id="formAuthentication" class="mb-3" action="index.html" method="POST">
                             <div class="mb-3">
+                                <label for="cv" class="form-label">CV</label>
+                                <input
+                                    type="file"
+                                    class="form-control"
+                                    id="cv"
+                                    name="cv"
+                                    placeholder="Enter your file" />
+                            </div>
+                            <div class="mb-3">
                                 <label for="username" class="form-label">Full Name</label>
                                 <input
                                     type="text"
                                     class="form-control"
                                     id="username"
                                     name="username"
-                                    placeholder="Enter your username"
-                                    autofocus />
+                                    placeholder="Enter your username" />
                             </div>
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
