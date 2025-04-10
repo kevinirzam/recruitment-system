@@ -30,6 +30,7 @@
     <link rel="stylesheet" href="{{ asset('site') }}/assets/css/demo.css" />
     <link rel="stylesheet" href="{{ asset('site') }}/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
     <link rel="stylesheet" href="{{ asset('site') }}/assets/vendor/css/pages/page-auth.css" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="{{ asset('site') }}/assets/vendor/js/helpers.js"></script>
     <script src="{{ asset('site') }}/assets/js/config.js"></script>
 </head>
@@ -102,14 +103,15 @@
                         <!-- <h4 class="mb-2">Welcome to Sneat! 👋</h4> -->
                         <p class="mb-4 text-center">Please sign-in to your account and start the adventure</p>
 
-                        <form id="formAuthentication" class="mb-3" action="javascript:void(0)" method="POST">
+                        <form id="formSignIn" class="mb-3" action="{{ 'sign-in' }}" method="POST">
+                            @csrf
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
                                 <input
                                     type="text"
                                     class="form-control"
                                     id="email"
-                                    name="email-username"
+                                    name="email"
                                     placeholder="Enter your email"
                                     autofocus />
                             </div>
@@ -132,7 +134,7 @@
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <button class="btn btn-primary d-grid w-100" type="submit">Sign in</button>
+                                <button class="btn btn-primary d-grid w-100" type="submit" id="btnSignIn">Sign in</button>
                             </div>
                         </form>
 
@@ -155,6 +157,74 @@
     <script src="{{ asset('site') }}/assets/vendor/js/menu.js"></script>
     <script src="{{ asset('site') }}/assets/js/main.js"></script>
     <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#formSignIn').submit(function(e) {
+                e.preventDefault();
+
+                let email = $('#email');
+                let password = $('#password');
+                let emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                if (!email.val()) {
+                    toastr.error('Email harus diisi!', 'ERROR')
+                    return false
+                }
+                if (!emailPattern.test(email.val())) {
+                    toastr.error('Invalid email format!', 'ERROR');
+                    return false;
+                }
+                if (!password.val()) {
+                    toastr.error('Password harus diisi!', 'ERROR')
+                    return false
+                }
+
+                var formData = new FormData($("#formSignIn")[0]);
+                $.ajaxSetup({
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    }
+                });
+                $.ajax({
+                    type: "POST",
+                    url: $('#formSignIn').attr('action'),
+                    data: formData,
+                    dataType: 'json',
+                    processData: false,
+                    contentType: false,
+                    beforeSend: function() {
+                        $('#btnSignIn').prop("disabled", true)
+                        $('#btnSignIn').html("Please wait...")
+                    },
+                    success: function(data) {
+                        console.log(data);
+                        if (!data.success) {
+                            toastr.error(data.message, 'ERROR')
+                            $('#btnSignIn').prop("disabled", false)
+                            $('#btnSignIn').html("Sign in")
+                            return false
+                        } else {
+                            toastr.error(data.message, 'SUCCESS')
+                            window.location.href = '/dashboard';
+                        }
+                    }
+                })
+            })
+        })
+    </script>
+
+    @if(Session::has('message_registration'))
+    <script>
+        toastr.success('Your account has been created, please login!', 'SUCCESS')
+    </script>
+    @endif
+    @if(Session::has('message'))
+    <script>
+        toastr.success('You have been logged out!', 'SUCCESS')
+    </script>
+    @endif
 </body>
 
 </html>

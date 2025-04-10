@@ -13,6 +13,7 @@
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Recruitment System - Login</title>
 
@@ -30,8 +31,10 @@
     <link rel="stylesheet" href="{{ asset('site') }}/assets/css/demo.css" />
     <link rel="stylesheet" href="{{ asset('site') }}/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
     <link rel="stylesheet" href="{{ asset('site') }}/assets/vendor/css/pages/page-auth.css" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="{{ asset('site') }}/assets/vendor/js/helpers.js"></script>
     <script src="{{ asset('site') }}/assets/js/config.js"></script>
+
 </head>
 
 <body>
@@ -102,7 +105,8 @@
                         <!-- <h4 class="mb-2">Welcome to Sneat! 👋</h4> -->
                         <p class="mb-4 text-center">Create your account and begin your journey!</p>
 
-                        <form id="formAuthentication" class="mb-3" action="index.html" method="POST">
+                        <form id="formSignUp" class="mb-3" action="{{ 'sign-up' }}" method="POST" enctype="multipart/form-data">
+                            @csrf
                             <div class="mb-3">
                                 <label for="cv" class="form-label">CV</label>
                                 <input
@@ -113,17 +117,21 @@
                                     placeholder="Enter your file" />
                             </div>
                             <div class="mb-3">
-                                <label for="username" class="form-label">Full Name</label>
+                                <label for="name" class="form-label">Full Name</label>
                                 <input
                                     type="text"
                                     class="form-control"
-                                    id="username"
-                                    name="username"
-                                    placeholder="Enter your username" />
+                                    id="name"
+                                    name="name"
+                                    placeholder="Enter your full name" />
                             </div>
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
                                 <input type="text" class="form-control" id="email" name="email" placeholder="Enter your email" />
+                            </div>
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone number</label>
+                                <input type="number" class="form-control" id="phone" name="phone" placeholder="Enter your phone" />
                             </div>
                             <div class="mb-3 form-password-toggle">
                                 <label class="form-label" for="password">Password</label>
@@ -141,20 +149,20 @@
 
                             <div class="mb-3">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="terms-conditions" name="terms" />
+                                    <input class="form-check-input" type="checkbox" id="terms-conditions" name="terms" checked />
                                     <label class="form-check-label" for="terms-conditions">
                                         I agree to
                                         <a href="javascript:void(0);">privacy policy & terms</a>
                                     </label>
                                 </div>
                             </div>
-                            <button class="btn btn-primary d-grid w-100">Sign up</button>
+                            <button class="btn btn-primary d-grid w-100" type="submit" id="btnSignUp">Sign up</button>
                         </form>
 
                         <p class="text-center">
                             <span>Have an account?</span>
                             <a href="{{ url('sign-in') }}">
-                                <span>Create an account</span>
+                                <span>Login to your account</span>
                             </a>
                         </p>
                     </div>
@@ -169,7 +177,75 @@
     <script src="{{ asset('site') }}/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
     <script src="{{ asset('site') }}/assets/vendor/js/menu.js"></script>
     <script src="{{ asset('site') }}/assets/js/main.js"></script>
-    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#formSignUp').submit(function(e) {
+                e.preventDefault();
+
+                let cv = $('#cv');
+                let name = $('#name');
+                let email = $('#email');
+                let phone = $('#phone');
+                let password = $('#password');
+                let emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                if (!cv.val()) {
+                    toastr.error('CV belum diupload!', 'ERROR')
+                    return false
+                }
+                if (!name.val()) {
+                    toastr.error('Name is required!', 'ERROR')
+                    return false
+                }
+                if (!email.val()) {
+                    toastr.error('Email is required!', 'ERROR')
+                    return false
+                }
+                if (!emailPattern.test(email.val())) {
+                    toastr.error('Invalid email format!', 'ERROR');
+                    return false;
+                }
+                if (!phone.val()) {
+                    toastr.error('Phone is required!', 'ERROR')
+                    return false
+                }
+                if (!password.val()) {
+                    toastr.error('Password is required!', 'ERROR')
+                    return false
+                }
+
+                var formData = new FormData($("#formSignUp")[0]);
+                $.ajaxSetup({
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    }
+                });
+                $.ajax({
+                    type: "POST",
+                    url: $('#formSignUp').attr('action'),
+                    data: formData,
+                    dataType: 'json',
+                    processData: false,
+                    contentType: false,
+                    beforeSend: function() {
+                        $('#btnSignUp').prop("disabled", true)
+                        $('#btnSignUp').html("Please wait...")
+                    },
+                    success: function(data) {
+                        if (!data.success) {
+                            toastr.error(data.message, 'ERROR')
+                            $('#btnSignUp').prop("disabled", false)
+                            $('#btnSignUp').html("Sign up")
+                            return false
+                        } else {
+                            window.location.href = '/sign-in';
+                        }
+                    }
+                })
+            })
+        })
+    </script>
 </body>
 
 </html>
